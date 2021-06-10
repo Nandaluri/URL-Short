@@ -11,7 +11,7 @@ client.connect(()=> {
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
 
-
+app.post("/")
 
 
 app.listen(PORT,() => {
