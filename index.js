@@ -23,11 +23,11 @@ app.get("/:slug", async(req,res) => {
         res.redirect(response.ourl)
     }
 })
-app.get("/api/short", (req,res) => {
+app.get("/api/short", async(req,res) => {
     const col = client.db("Url-collection").collection("Urls")
     let slug = uniqueSlug()
     try{
-        col.insertOne({"slug": slug, "ourl": "https://www.facebook.com"})
+        await col.insertOne({"slug": slug, "ourl": "https://www.facebook.com"})
     } catch(err){
         console.error(err)
     } finally {
