@@ -17,23 +17,59 @@ app.get("/:slug", async(req,res) => {
     let response = "";
     try{
         response = await col.findOne({"slug": req.params.slug})
+        console.log(req.ip)
+        col.updateOne({"slug": req.params.slug}, {$inc: {"clicks": 1}, $push: {"clickAddress": req.ip}})
     } catch(err){
         console.error(err)
     } finally {
         res.redirect(response.ourl)
     }
 })
-app.get("/api/short", async(req,res) => {
+//
+app.post("/api/short", async(req,res) => {
     const col = client.db("Url-collection").collection("Urls")
-    let slug = uniqueSlug()
+    // create new uniques slug
+    const slug = await createAndCheckSlug(col)
+    
     try{
-        await col.insertOne({"slug": slug, "ourl": "https://www.facebook.com"})
+        await checkForValidUrl(req.body.url, res)
+        await col.insertOne({"slug": slug, "ourl": req.body.url, "clicks": 0, "clickAddress": []})
     } catch(err){
+        //handle error
         console.error(err)
+        res.send("Something went wrong")
     } finally {
-        res.send("new url created")
+        //respond with new short url
+        res.json("localhost:" + PORT + "/" + slug)
     }
 })
+
+
+//functions
+
+//create unique slug
+async function createAndCheckSlug(col){
+    //create new slug
+    let slug = uniqueSlug()
+    //check if slug already exists
+    const checkSlug = await col.findOne({"slug": slug})
+    //return slug if unique, else try again
+    if(!checkSlug){
+        return slug
+    } else {
+        return createAndCheckSlug(col)
+    }
+}
+
+//check if url is valid
+async function checkForValidUrl(url, res){
+    try{
+        new URL(url)
+    } catch(err){
+        res.send("url not valid. Check for spelling mistakes")
+    }
+    return true
+}
 
 
 app.listen(PORT,() => {
