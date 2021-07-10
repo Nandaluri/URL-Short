@@ -40,7 +40,7 @@ app.post("/api/short", async(req,res) => {
         res.send("Something went wrong")
     } finally {
         //respond with new short url
-        res.json("localhost:" + PORT + "/" + slug)
+        res.json({"status"})//ikke fullført
     }
 })
 
