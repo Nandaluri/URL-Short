@@ -12,16 +12,18 @@ client.connect(()=> {
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
 
+//redirect with slug
 app.get("/:slug", async(req,res) => {
     const col = client.db("Url-collection").collection("Urls");
-    let response = "";
+    let response;
     try{
         response = await col.findOne({"slug": req.params.slug})
-        console.log(req.ip)
+        console.log(response)
         col.updateOne({"slug": req.params.slug}, {$inc: {"clicks": 1}, $push: {"clickAddress": req.ip}})
     } catch(err){
-        console.error(err)
+        res.send("something went wrong")
     } finally {
+        res.status(201)
         res.redirect(response.ourl)
     }
 })
@@ -32,15 +34,13 @@ app.post("/api/short", async(req,res) => {
     const slug = await createAndCheckSlug(col)
     
     try{
-        await checkForValidUrl(req.body.url, res)
         await col.insertOne({"slug": slug, "ourl": req.body.url, "clicks": 0, "clickAddress": []})
     } catch(err){
         //handle error
-        console.error(err)
-        res.send("Something went wrong")
+        res.json({"status": "error", "errorMessage": "Something went wrong"})
     } finally {
-        //respond with new short url
-        res.json({"status"})//ikke fullført
+        //respond with new slug
+        res.json({"status": "success", "slug": slug})
     }
 })
 
@@ -61,15 +61,6 @@ async function createAndCheckSlug(col){
     }
 }
 
-//check if url is valid
-async function checkForValidUrl(url, res){
-    try{
-        new URL(url)
-    } catch(err){
-        res.send("url not valid. Check for spelling mistakes")
-    }
-    return true
-}
 
 
 app.listen(PORT,() => {
